@@ -8280,7 +8280,7 @@ solve the function  [ 1.5 -0.5 -0. ]
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c0b42dc6">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=37e5f585">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9229,6 +9229,37 @@ The process can be divided into three steps: decomposition -&gt; Resolution -&gt
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>Consider the set operation, we can use binary notation: 0 for non-existence and 1 for existence. Hence, $mark \in [0, 2^n - 1]$ can be used to represent all power sets.</p>
+<table>
+<thead>
+<tr>
+<th>0000</th>
+<th>0001</th>
+<th>0010</th>
+<th>0011</th>
+<th>0100</th>
+<th>0101</th>
+<th>0110</th>
+<th>0111</th>
+<th>...</th>
+<th>1111</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[]</td>
+<td>[16]</td>
+<td>[48]</td>
+<td>[16,48]</td>
+<td>[74]</td>
+<td>[16,74]</td>
+<td>[48,74]</td>
+<td>[16,48,74]</td>
+<td>...</td>
+<td>[16,48,74,86]</td>
+</tr>
+</tbody>
+</table>
 <p>There are two ways I have in mind:</p>
 <ul>
 <li>Enumerate subsets iteratively</li>
@@ -9254,7 +9285,7 @@ The process can be divided into three steps: decomposition -&gt; Resolution -&gt
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [30]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [34]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="sd">''' Answer as code here '''</span>
@@ -9286,7 +9317,7 @@ The process can be divided into three steps: decomposition -&gt; Resolution -&gt
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[30]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[34]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>[[],
  ['16'],
@@ -9324,7 +9355,7 @@ The process can be divided into three steps: decomposition -&gt; Resolution -&gt
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [31]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">subsets_recu</span><span class="p">(</span><span class="n">nums</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
@@ -9342,6 +9373,7 @@ The process can be divided into three steps: decomposition -&gt; Resolution -&gt
         <span class="n">t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nums</span><span class="p">[</span><span class="n">cur</span><span class="p">])</span>
         <span class="n">dfs</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">cur</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">t</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        
     <span class="n">dfs</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ans</span>
 
@@ -9356,7 +9388,7 @@ The process can be divided into three steps: decomposition -&gt; Resolution -&gt
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[31]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>[[],
  ['86'],
