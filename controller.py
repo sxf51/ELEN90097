@@ -44,7 +44,7 @@ def load_callback(m=None, d=None):
 
 log_count = 0
 def control_callback(m, d):
-    global log_count, gravity, mass, controller
+    global log_count, gravity, mass
     _pos = d.qpos
     _vel = d.qvel
     _sensor_data = d.sensordata
@@ -65,14 +65,11 @@ def control_callback(m, d):
     # 位置控制模式 目标位点
     goal_position = np.array([0.0, 0.0, 0.5])
 
-    # NMPC Update
-    _dt, _control = controller.nmpc_position_control(current_state, goal_position)
-    d.actuator('motor1').ctrl[0] = calc_motor_input(_control[0])
-    d.actuator('motor2').ctrl[0] = calc_motor_input(_control[1])
-    d.actuator('motor3').ctrl[0] = calc_motor_input(_control[2])
-    d.actuator('motor4').ctrl[0] = calc_motor_input(_control[3])
+    return current_state
 
+'''
     log_count += 1
     if log_count >= 50:
         log_count = 0
         # 这里输出log
+'''
