@@ -46,7 +46,7 @@ d.actuator('motor4').ctrl[0] = w[3]
 
 x0 = [0., 0., 0.1, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
 # Time parameters
-t0, t_end = 0, 0.5  # Time range (seconds)
+t0, t_end = 0, 1  # Time range (seconds)
 dt = 0.01  # Time step (seconds)
 N = int((t_end - t0) / dt)  # Number of steps
 t_pts = np.linspace(t0, t_end, N + 1)
@@ -82,10 +82,15 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
 
 '''
 
-solution = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method='RK45')
+sol_rk45 = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="RK45")
+# sol_rk23 = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="RK23")
+# sol_dop853 = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="DOP853")
 
-plt.plot(t_pts, solution.y[2, :], "s-", label = "RK45")
-plt.plot(t_pts, sim_data, "o-", label = "simulation")
+
+plt.plot(t_pts, sol_rk45.y[2, :], "r-", label = "RK45")
+# plt.plot(t_pts, sol_rk23.y[2, :], "k-", label = "RK23")
+# plt.plot(t_pts, sol_dop853.y[2, :], "m-", label = "DOP853")
+plt.plot(t_pts, sim_data, "b-", label = "simulation")
 
 plt.legend()
 plt.grid()

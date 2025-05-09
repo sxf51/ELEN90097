@@ -15,7 +15,6 @@ def export_model(t, y: list, w):
     Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
     dq  = 65e-3      # [m] distance between motors' center
     l   = dq/2       # [m] distance between motors' center and the axis of rotation
-    max_thrust = 0.1573
 
     # 世界坐标系位置  Position of the world coordinate system
     px = y[0]
@@ -37,11 +36,11 @@ def export_model(t, y: list, w):
     # 构建状态向量
     # x = [px, py, pz, q0, q1, q2, q3, vx, vy, vz, wx, wy, wz]
 
-    # 系统控制输入: 四个电机的转速
-    w1 = (max_thrust/Ct * w[0]) ** 0.5
-    w2 = (max_thrust/Ct * w[1]) ** 0.5
-    w3 = (max_thrust/Ct * w[2]) ** 0.5
-    w4 = (max_thrust/Ct * w[3]) ** 0.5
+    # 系统控制输入: 四个电机的转速 sqrt(max_rot_speed)
+    w1 = 22 * w[0] ** 0.5
+    w2 = 22 * w[1] ** 0.5
+    w3 = 22 * w[2] ** 0.5
+    w4 = 22 * w[3] ** 0.5
     u = [w1, w2, w3, w4]
 
     # xdot = [px_dot, py_dot, pz_dot, q0_dot, q1_dot, q2_dot, q3_dot, vx_dot, vy_dot, vz_dot, wx_dot, wy_dot, wz_dot]
