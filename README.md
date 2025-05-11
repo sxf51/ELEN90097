@@ -47,7 +47,7 @@ Calculate the rotation matrix for converting from the body coordinate system to 
 $$
 R_b^w=
 \begin{bmatrix}
-1-2q_2^2-2q_3^2  & 2(q_1\cdot q_2-q_0\cdot q_3) & 2(q_1\cdot q_3 + q_0\cdot q_2) \\ 
+1-2q_2^2-2q_3^2  & 2(q_1\cdot q_2-q_0\cdot q_3) & 2(q_1\cdot q_3 + q_0\cdot q_2) \\
 2(q_1\cdot q_2 + q_0\cdot q_3)  & 1-2q_1^2-2q_3^2 & 2(q_2\cdot q_3 - q_0\cdot q_1)\\
 2(q_1\cdot q_3 - q_0\cdot q_2)  & 2(q_2\cdot q_3 + q_0\cdot q_1) & 1-2q_1^2-2q_2^2
 \end{bmatrix}
@@ -60,7 +60,7 @@ In the case of small-angle changes, the minor changes in quaternions can be expr
 $$
 \Delta q=
 \begin{bmatrix}
-1 \\ \frac{\Delta \theta}{2} 
+1 \\ \frac{\Delta \theta}{2}
 \end{bmatrix}
 $$
 
@@ -74,7 +74,7 @@ $$
 q\otimes \Delta q= \frac{1}{2}
 \begin{bmatrix}
 0  & -\Delta \theta_x & -\Delta \theta_y & -\Delta \theta_z\\
-\Delta \theta_x  & 0 & \Delta \theta_z & -\Delta \theta_y\\ 
+\Delta \theta_x  & 0 & \Delta \theta_z & -\Delta \theta_y\\
 \Delta \theta_y  & -\Delta \theta_z & 0 & \Delta \theta_x\\
 \Delta \theta_z  & \Delta \theta_y & -\Delta \theta_x & 0
 \end{bmatrix}
@@ -83,7 +83,7 @@ $$
 Quaternion approximate differentiation:
 
 $$
-q{}' = \frac{1}{2} 
+q{}' = \frac{1}{2}
 \begin{bmatrix}
  0 & -\omega_x & -\omega_y & -\omega_z\\
 \omega_x  & 0 & \omega_z & -\omega_y\\
@@ -127,11 +127,11 @@ my = Ct*l*( -w1**2 - w2**2 + w3**2 + w4**2)
 mz = Cd*  ( -w1**2 + w2**2 - w3**2 + w4**2)
 ```
 
-1.Motor1 Motor4使得机体绕自身X轴正向旋转 Motor2 Motor3使得使得机体绕自身X轴逆向旋转
+1. Motor1 and Motor4 make the body rotate in the forward direction around its own X-axis, while Motor2 and Motor3 make the body rotate in the reverse direction around its own X-axis
 
-2.Motor1 Motor2使得机体绕自身Y轴逆向旋转 Motor3 Motor4使得使得机体绕自身Y轴正向旋转
+2. Motor1 and Motor2 make the body rotate in the reverse direction around its own Y-axis. Motor3 and Motor4 make the body rotate in the forward direction around its own Y-axis
 
-3.Motor1 Motor3产生顺时针反扭 Motor2 Motor4产生逆时针反扭(逆时针为正)
+3. Motor1 and Motor3 produce clockwise reverse twisting. Motor2 and Motor4 produce counterclockwise reverse twisting (counterclockwise is positive).
 
 ### Position differentiation
 
