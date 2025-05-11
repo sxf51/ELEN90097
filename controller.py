@@ -1,8 +1,7 @@
 import mujoco
-import mujoco.viewer as viewer
 import numpy as np
 
-gravity = 9.8066        # 重力加速度 (m/s^2)
+gravity = 9.81        # 重力加速度 (m/s^2)
 mass = 0.033            # 飞行器质量 (kg)
 Ct = 3.25e-4            # 电机推力系数 (N/krpm^2)
 Cd = 7.9379e-6          # 电机反扭系数 (Nm/krpm^2)
@@ -73,3 +72,4 @@ def control_callback(m, d):
         log_count = 0
         # 这里输出log
 '''
+    

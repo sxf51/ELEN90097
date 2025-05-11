@@ -8,6 +8,7 @@ from scipy.integrate import solve_ivp
 
 from controller import *
 from odeSolver import *
+from pid import *
 
 m = mujoco.MjModel.from_xml_path('./crazyfile/scene.xml')
 d = mujoco.MjData(m)
@@ -29,11 +30,11 @@ m.opt.timestep = dt
 next_time = time.time() + dt
 m.opt.integrator = mujoco.mjtIntegrator.mjINT_RK4
 
-#d.qpos[3:7] = [0.995, 0, 0.1, 0] # Initial Angle
+x0 = [0., 0., 0.1, 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.] # initial state
+d.qpos[0:7] = x0[0:7] # Initial Angle
 
-x0 = [0., 0., 0.1, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
 # Time parameters
-t0, t_end = 0, 100  # Time range (seconds)
+t0, t_end = 0, 2  # Time range (seconds)
 dt = 0.01  # Time step (seconds)
 N = int((t_end - t0) / dt)  # Number of steps
 t_pts = np.linspace(t0, t_end, N + 1)
@@ -45,7 +46,7 @@ def key_callback(keycode):
         global paused
         paused = not paused
 
-w = [17, 17, 17, 17]
+w = [22, 22, 22, 22]
 d.actuator('motor1').ctrl[0] = calc_motor_input(w[0])
 d.actuator('motor2').ctrl[0] = calc_motor_input(w[1])
 d.actuator('motor3').ctrl[0] = calc_motor_input(w[2])
@@ -53,29 +54,29 @@ d.actuator('motor4').ctrl[0] = calc_motor_input(w[3])
 
 sim_data = list()
 sim_data.append(control_callback(m, d))
-'''
-for i in range(N):
-    mujoco.mj_step(m, d, nstep = 1) # nstep means the step for each circle
-    sim_data.append(control_callback(m, d))
-'''
 
+target = [0., 0., 0.5]
 
 
 with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
     while viewer.is_running():
-        for i in range(N):
+        #for i in range(N):
             if not paused:
-                #time.sleep(dt*5)
+                w = pid_controller(control_callback(m, d), target)
+                d.actuator('motor1').ctrl[0] = calc_motor_input(w[0])
+                d.actuator('motor2').ctrl[0] = calc_motor_input(w[1])
+                d.actuator('motor3').ctrl[0] = calc_motor_input(w[2])
+                d.actuator('motor4').ctrl[0] = calc_motor_input(w[3])
+                time.sleep(dt*5)
                 mujoco.mj_step(m, d, nstep = 1)
                 sim_data.append(control_callback(m, d))
                 viewer.sync()
-        break
+        #break
         
 
 
 sol_rk45 = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="RK45")
 sol_rk23 = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="RK23")
-sol_dop853 = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="DOP853")
 
 fig, ax = plt.subplots(2, 1)
 sim_data = np.array(sim_data)
@@ -95,4 +96,5 @@ ax[1].legend()
 ax[1].grid()
 
 plt.show()
-print(sim_data[-1, 9])
+print(sol_rk45.y[:, -1])
+print(sim_data[-1, :])

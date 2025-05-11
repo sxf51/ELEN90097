@@ -2,8 +2,6 @@ import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
-from casadi import SX, vertcat
-
 # Use the linear equation (when the Angle is very small)
 def export_model(t, y: list, w):
     # parameters
@@ -37,7 +35,7 @@ def export_model(t, y: list, w):
     # 构建状态向量
     # x = [px, py, pz, q0, q1, q2, q3, vx, vy, vz, wx, wy, wz]
 
-    # 系统控制输入: 四个电机的转速 sqrt(max_rot_speed)
+    # 系统控制输入: 四个电机的转速
     w1 = w[0]
     w2 = w[1]
     w3 = w[2]
@@ -58,9 +56,9 @@ def export_model(t, y: list, w):
     _thrust_accx_w = 2*(q1*q3+q0*q2)*_thrust_acc_b
     _thrust_accy_w = 2*(-q0*q1+q2*q3)*_thrust_acc_b
     _thrust_accz_w = 2*(0.5-q1**2-q2**2)*_thrust_acc_b
-    vx_d = _thrust_accx_w - (0.00242 * vx**2)/mass
-    vy_d = _thrust_accy_w - (0.00242 * vy**2)/mass
-    vz_d = _thrust_accz_w - (0.00242 * vz**2)/mass - g0  # 重力加速度
+    vx_d = _thrust_accx_w - (0.00242 * vx * abs(vx))/mass
+    vy_d = _thrust_accy_w - (0.00242 * vy * abs(vy))/mass
+    vz_d = _thrust_accz_w - (0.00242 * vz * abs(vz))/mass - g0  # 重力加速度
 
     # 四元数求导
     q0_d = -(q1*wx)/2 - (q2*wy)/2 - (q3*wz)/2
@@ -84,7 +82,7 @@ def export_model(t, y: list, w):
 
     return y_dot
 
-
+'''
 x0 = [0., 0., 0.1, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
 # Time parameters
 t0, t_end = 0, 0.1  # Time range (seconds)
@@ -94,7 +92,7 @@ t_pts = np.linspace(t0, t_end, N + 1)
 
 w = [22, 22, 22, 22]
 solution = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="RK45")
-
+'''
 #print(solution.y[2, :])
 '''
 R = np.array([
