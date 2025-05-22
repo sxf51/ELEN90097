@@ -6,9 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 
-from controller import *
-from odeSolver import *
-from pid import *
+from src.controller import *
+from src.odeSolver import *
+from src.pid import *
 import sqlite3
 import redis
 
