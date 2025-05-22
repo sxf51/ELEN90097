@@ -1,24 +1,24 @@
 import mujoco
 import numpy as np
 
-gravity = 9.81        # 重力加速度 (m/s^2)
-mass = 0.033            # 飞行器质量 (kg)
-Ct = 3.25e-4            # 电机推力系数 (N/krpm^2)
-Cd = 7.9379e-6          # 电机反扭系数 (Nm/krpm^2)
+gravity = 9.81
+mass = 0.033
+Ct = 3.25e-4
+Cd = 7.9379e-6
 
-arm_length = 0.065/2.0  # 电机力臂长度 单位m
-max_thrust = 0.1573     # 单个电机最大推力 单位N (电机最大转速22krpm)
-max_torque = 3.842e-03  # 单个电机最大扭矩 单位Nm (电机最大转速22krpm)
+arm_length = 0.065/2.0
+max_thrust = 0.1573
+max_torque = 3.842e-03 
 
-# 仿真周期 100Hz 10ms 0.01s
+# 100Hz 10ms 0.01s
 dt = 0.01
 
-# 根据电机转速计算电机推力
+# Calculate the motor thrust based on the motor speed.
 def calc_motor_force(krpm):
     global Ct
     return Ct * krpm**2
 
-# 根据电机转速计算电机归一化输入
+# Calculate the normalized input of the motor based on its rotational speed.
 def calc_motor_input(krpm):
     if krpm > 22:
         krpm = 22
@@ -32,13 +32,13 @@ def calc_motor_input(krpm):
         _input = 0
     return _input
 
-# 加载模型回调函数
+# Load model callback function
 def load_callback(m=None, d=None):
     mujoco.set_mjcb_control(None)
     m = mujoco.MjModel.from_xml_path('./crazyfile/scene.xml')
     d = mujoco.MjData(m)
     if m is not None:
-        mujoco.set_mjcb_control(lambda m, d: control_callback(m, d))  # 设置控制回调函数
+        mujoco.set_mjcb_control(lambda m, d: control_callback(m, d))
     return m, d
 
 log_count = 0
@@ -58,10 +58,10 @@ def control_callback(m, d):
     quat_y = _sensor_data[8]
     quat_z = _sensor_data[9]
     quat = np.array([quat_x, quat_y, quat_z, quat_w])  # x y z w
-    omega = np.array([gyro_x, gyro_y, gyro_z])         # 角速度
-    # 构建当前状态
+    omega = np.array([gyro_x, gyro_y, gyro_z])
+
     current_state = np.array([_pos[0], _pos[1], _pos[2], quat[3], quat[0], quat[1], quat[2], _vel[0], _vel[1], _vel[2], omega[0], omega[1], omega[2]])
-    # 位置控制模式 目标位点
+
     goal_position = np.array([0.0, 0.0, 0.5])
 
     return current_state
@@ -70,6 +70,6 @@ def control_callback(m, d):
     log_count += 1
     if log_count >= 50:
         log_count = 0
-        # 这里输出log
+        # log
 '''
     
