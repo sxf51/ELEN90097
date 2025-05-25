@@ -95,12 +95,17 @@ m = mujoco.MjModel.from_xml_path('./crazyfile/scene.xml')
 d = mujoco.MjData(m)
 
 
-gravity = 9.81       # gravity (m/s^2)
-mass = 0.033            # mass of the quadcopter (kg)
-Ct = 3.25e-4            # Motor thrust coefficient (N/krpm^2)
-Cd = 7.9379e-6          # Motor reverse torque coefficient (Nm/krpm^2)
 
-arm_length = 0.065/2.0  # The length of the motor lever arm (m)
+g0  = 9.81     # [m.s^2] accerelation of gravity
+mass  = 0.033    # [kg] total mass (with one marker)
+Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
+Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis
+Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis
+Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
+Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
+dq  = 65e-3      # [m] distance between motors' center
+
+arm_length = dq/2.0  # The length of the motor lever arm (m)
 max_thrust = 0.1573     # Maximum thrust of a single motor (N) (max = 22krpm)
 max_torque = 3.842e-03  # Maximum torque of a single motor (Nm) (max = 22krpm)
 
@@ -112,11 +117,11 @@ next_time = time.time() + dt
 # m.opt.integrator = mujoco.mjtIntegrator.mjINT_RK4
 
 x0 = [0., 0., 0.1, 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.] # initial state
-x0 = [0., 0., 0.1, 0.984808, 0., 0.173648, 0., 0., 0., 0., 0., 0., 0.]
+x0 = [0., 0., 0.1, 0.9924, 0.0868, 0.0868, 0.0076, 0., 0., 0., 0., 0., 0.]
 d.qpos[0:7] = x0[0:7] # Initial Angle
 
 # Time parameters
-t0, t_end = 0, 10  # Time range (seconds)
+t0, t_end = 0, 100  # Time range (seconds)
 dt = 0.01  # Time step (seconds)
 N = int((t_end - t0) / dt)  # Number of steps
 t_pts = np.linspace(t0, t_end, N + 1)
@@ -128,7 +133,7 @@ def key_callback(keycode):
         global paused
         paused = not paused
 
-w = [22, 22, 22, 22]
+w = [21, 21, 21, 21]
 d.actuator('motor1').ctrl[0] = calc_motor_input(w[0])
 d.actuator('motor2').ctrl[0] = calc_motor_input(w[1])
 d.actuator('motor3').ctrl[0] = calc_motor_input(w[2])
@@ -169,21 +174,17 @@ def rotation(q):
 # RK45
 sol_rk45 = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="RK45")
 
-vx_rk45 = np.zeros(N + 1)
-vy_rk45 = np.zeros(N + 1)
-vz_rk45 = np.zeros(N + 1)
+v_rk45 = np.zeros([N + 1, 3], dtype=float)
 for i in range(N + 1):
-    vx_rk45[i], vy_rk45[i], vz_rk45[i] = rotation(sol_rk45.y[3:7, i]) @ sol_rk45.y[7:10, i]
+    v_rk45[i, :] = rotation(sol_rk45.y[3:7, i]) @ sol_rk45.y[7:10, i]
 
 
 # RK23
 sol_rk23 = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="RK23")
 
-vx_rk23 = np.zeros(N + 1)
-vy_rk23 = np.zeros(N + 1)
-vz_rk23 = np.zeros(N + 1)
+v_rk23 = np.zeros([N + 1, 3], dtype=float)
 for i in range(N + 1):
-    vx_rk23[i], vy_rk23[i], vz_rk23[i] = rotation(sol_rk23.y[3:7, i]) @ sol_rk23.y[7:10, i]
+    v_rk23[i, :] = rotation(sol_rk23.y[3:7, i]) @ sol_rk23.y[7:10, i]
 
 
 ws = np.full((N+1, 4), w)
@@ -196,26 +197,33 @@ conn.close()
 
 
 # Plot
-fig, ax = plt.subplots(2, 1)
+# Velocity
+fig, ax = plt.subplots(3, 1)
 sim_data = np.array(sim_data)
 
-ax[0].plot(t_pts, vz_rk45, "r-", label = "RK45")
-ax[0].plot(t_pts, vz_rk23, "g-", label = "RK23")
-ax[0].plot(t_pts, sim_data[:, 9], "b-", label = "simulation")
-ax[0].set(xlabel='time/s', ylabel='The velocity in the Z-axis direction')
+vel_lable = ['X', 'Y', 'Z']
+for i in range(3):
+    ax[i].plot(t_pts, v_rk45[:,i], "r-", label = "RK45")
+    ax[i].plot(t_pts, v_rk23[:,i], "g-", label = "RK23")
+    ax[i].plot(t_pts, sim_data[:, 7+i], "b-", label = "simulation")
+    ax[i].set(ylabel=f'{vel_lable[i]}-axis direction velocity')
+    ax[i].legend()
+    ax[i].grid()
 
-ax[0].legend()
-ax[0].grid()
+ax[2].set(xlabel = 'time/s')
 
-ax[1].plot(t_pts, sol_rk45.y[2, :], "r-", label = "RK45")
-ax[1].plot(t_pts, sol_rk23.y[2, :], "g-", label = "RK23")
-ax[1].plot(t_pts, sim_data[:, 2], "b-", label = "simulation")
-ax[1].set(xlabel='time/s', ylabel='Z-axis coordinate')
+# Position
+fig, bx = plt.subplots(3, 1)
+for i in range(3):
+    bx[i].plot(t_pts, sol_rk45.y[i, :], "r-", label = "RK45")
+    bx[i].plot(t_pts, sol_rk23.y[i, :], "g-", label = "RK23")
+    bx[i].plot(t_pts, sim_data[:, i], "b-", label = "simulation")
+    bx[i].set(xlabel='time/s', ylabel=f'{vel_lable[i]}-axis coordinate')
+    bx[i].legend()
+    bx[i].grid()
 
-ax[1].legend()
-ax[1].grid()
-
+# plt.tight_layout()
 plt.show()
-print(sol_rk45.y[:, -1])
+#print(sol_rk45.y[:, -1])
 #print(sol_rk23.y[:, -1])
 #print(sim_data[-1, :])
