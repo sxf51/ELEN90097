@@ -100,7 +100,7 @@ print(df_day_night_daily)
 query_extreme = """
 SELECT company, timestamp, generation_mw
 FROM generation_data
-WHERE generation_mw > 500
+WHERE generation_mw > 700
 ORDER BY generation_mw DESC
 LIMIT 10;
 """
@@ -147,9 +147,7 @@ df_company = df[df["company"] == company_name]
 
 weekend_flag = np.where(df_company.index.weekday < 5, "Weekday", "Weekend")
 
-
 by_time = df_company.groupby([weekend_flag, df_company.index.time]).mean(numeric_only=True)
-
 
 fig, ax = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
 hourly_ticks = [pd.to_datetime(f"{h:02}:00").time() for h in range(0, 24, 2)]
