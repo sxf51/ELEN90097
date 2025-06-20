@@ -1,5 +1,36 @@
 # ELEN90097 Project
 
+``` bash
+.
+|   data.ipynb
+|   main.py
+|   README.md
+|   tree.txt
+|   
++---crazyfile
+|   |   cf2.png
+|   |   cf2.xml
+|   |   LICENSE
+|   |   README.md
+|   |   scene.xml
+|   |   
+|   \---assets
+|           
++---data
+|       50Hertz.csv
+|       Amprion.csv
+|       combined_data.csv
+|       datasets.py
+|       quadcopter.db
+|       TenneTTSO.csv
+|       TransnetBW.csv
+|       
+\---src
+        controller.py
+        odeSolver.py
+        pid.py
+```
+
 ## Parameters
 
 ```python

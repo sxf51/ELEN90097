@@ -43,9 +43,9 @@ GROUP BY company;
 df_pre = pd.read_sql_query(query_covid_pre, conn)
 df_post = pd.read_sql_query(query_covid_post, conn)
 
-print("=== 疫情前发电均值 ===")
+print("=== Average power generation before the epidemic ===")
 print(df_pre)
-print("\n=== 疫情后发电均值 ===")
+print("\n=== Average power generation after the epidemic ===")
 print(df_post)
 
 

@@ -8,13 +8,12 @@ from scipy.integrate import solve_ivp
 
 from src.controller import *
 from src.odeSolver import *
-from src.pid import *
 import sqlite3
 import redis
 
 
 # Database configuration
-file_name = 'quadcopter.db'
+file_name = '.\data\quadcopter.db'
 # Redis
 pool = redis.ConnectionPool(host='localhost', port=6379, db=0, decode_responses=True)
 r = redis.Redis(connection_pool=pool)
@@ -63,16 +62,22 @@ def truncate_all_tables(db_path):
             conn.rollback()
             raise
 
+def rotation(q):
+    q0, q1, q2, q3 = q
+    S = np.array([
+        [1 - 2*q2**2 - 2*q3**2, 2*(q1*q2 - q0*q3), 2*(q1*q3 + q0*q2)],
+        [2*(q1*q2 + q0*q3), 1 - 2*q1**2 - 2*q3**2, 2*(q2*q3 - q0*q1)],
+        [2*(q1*q3 - q0*q2), 2*(q2*q3 + q0*q1), 1 - 2*q1**2 - 2*q2**2]
+    ])
+    return S
 
-if table_exists(conn, 'quadcopter'):
+
+if table_exists(conn, 'quadcopter_states'):
     truncate_all_tables(file_name)
     pass
 else:
-    sql_header = '''CREATE TABLE quadcopter
-                    (Motor1_rotational_speed NUMBER,
-                    Motor2_rotational_speed NUMBER,
-                    Motor3_rotational_speed NUMBER,
-                    Motor4_rotational_speed NUMBER,
+    sql_header_states = '''CREATE TABLE quadcopter_states
+                    (Timestamp NUMBER,
                     X_axis_coordinate NUMBER,
                     Y_axis_coordinate NUMBER,
                     Z_axis_coordinate NUMBER,
@@ -86,8 +91,17 @@ else:
                     Angular_velocity_bx NUMBER,
                     Angular_velocity_by NUMBER,
                     Angular_velocity_bz NUMBER);'''
+    cur.execute(sql_header_states)
 
-    cur.execute(sql_header)
+
+    sql_header_inputs = '''CREATE TABLE quadcopter_inputs
+                    (Timestamp NUMBER,
+                    Motor1_rotational_speed NUMBER,
+                    Motor2_rotational_speed NUMBER,
+                    Motor3_rotational_speed NUMBER,
+                    Motor4_rotational_speed NUMBER);'''
+    cur.execute(sql_header_inputs)
+    
 
 
 # import mujoco
@@ -121,7 +135,7 @@ x0 = [0., 0., 0.1, 0.9924, 0.0868, 0.0868, 0.0076, 0., 0., 0., 0., 0., 0.]
 d.qpos[0:7] = x0[0:7] # Initial Angle
 
 # Time parameters
-t0, t_end = 0, 100  # Time range (seconds)
+t0, t_end = 0, 10  # Time range (seconds)
 dt = 0.01  # Time step (seconds)
 N = int((t_end - t0) / dt)  # Number of steps
 t_pts = np.linspace(t0, t_end, N + 1)
@@ -142,6 +156,9 @@ d.actuator('motor4').ctrl[0] = calc_motor_input(w[3])
 sim_data = list()
 sim_data.append(control_callback(m, d))
 
+rk45 = list()
+rk45.append(np.array(x0))
+
 target = [0., 0., 0.5]
 
 
@@ -155,21 +172,19 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
                 d.actuator('motor2').ctrl[0] = calc_motor_input(w[1])
                 d.actuator('motor3').ctrl[0] = calc_motor_input(w[2])
                 d.actuator('motor4').ctrl[0] = calc_motor_input(w[3])
-                time.sleep(dt*5)'''
+                time.sleep(dt)'''
+                '''
+                sol_rk45 = solve_ivp(export_model, [0, dt], rk45[:][-1], args=(w,), method="RK45")
+                rk45.append(sol_rk45.y[:, -1])'''
+                #time.sleep(dt*10)
                 mujoco.mj_step(m, d, nstep = 1)
-                sim_data.append(control_callback(m, d))
+                sim_data.append(np.add(control_callback(m, d), np.random.normal(0, 0, size=(13))))
                 viewer.sync()
         break
-        
-
-def rotation(q):
-    q0, q1, q2, q3 = q
-    S = np.array([
-        [1 - 2*q2**2 - 2*q3**2, 2*(q1*q2 - q0*q3), 2*(q1*q3 + q0*q2)],
-        [2*(q1*q2 + q0*q3), 1 - 2*q1**2 - 2*q3**2, 2*(q2*q3 - q0*q1)],
-        [2*(q1*q3 - q0*q2), 2*(q2*q3 + q0*q1), 1 - 2*q1**2 - 2*q2**2]
-    ])
-    return S
+'''
+for i in range(N + 1):
+    rk45[i][7:10] = rotation(rk45[i][3:7]) @ rk45[i][7:10]
+rk45 = np.array(rk45)'''
 
 # RK45
 sol_rk45 = solve_ivp(export_model, [t0, t_end], x0, args=(w,), t_eval= t_pts, method="RK45")
@@ -187,9 +202,20 @@ for i in range(N + 1):
     v_rk23[i, :] = rotation(sol_rk23.y[3:7, i]) @ sol_rk23.y[7:10, i]
 
 
+# data storage
 ws = np.full((N+1, 4), w)
-cur.executemany('INSERT INTO quadcopter VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', 
-                np.hstack([ws, sol_rk45.y[:, :].T]))
+#print(np.shape(ws))
+timestamps = t_pts.reshape(1001, 1)
+#print(np.shape(timestamps))
+
+sim_data = np.array(sim_data)
+#print(np.shape(sim_data))
+
+cur.executemany('INSERT INTO quadcopter_states VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', 
+                np.hstack([timestamps, sim_data]))
+cur.executemany('INSERT INTO quadcopter_inputs VALUES (?,?,?,?,?)', 
+                np.hstack([timestamps, ws]))
+
 
 conn.commit()
 cur.close()
@@ -199,14 +225,14 @@ conn.close()
 # Plot
 # Velocity
 fig, ax = plt.subplots(3, 1)
-sim_data = np.array(sim_data)
 
-vel_lable = ['X', 'Y', 'Z']
+lable = ['X', 'Y', 'Z']
 for i in range(3):
     ax[i].plot(t_pts, v_rk45[:,i], "r-", label = "RK45")
+    #ax[i].plot(t_pts, rk45[:, i+7], "k-", label = "RK45")
     ax[i].plot(t_pts, v_rk23[:,i], "g-", label = "RK23")
     ax[i].plot(t_pts, sim_data[:, 7+i], "b-", label = "simulation")
-    ax[i].set(ylabel=f'{vel_lable[i]}-axis direction velocity')
+    ax[i].set(ylabel=f'{lable[i]}-axis direction velocity')
     ax[i].legend()
     ax[i].grid()
 
@@ -216,9 +242,10 @@ ax[2].set(xlabel = 'time/s')
 fig, bx = plt.subplots(3, 1)
 for i in range(3):
     bx[i].plot(t_pts, sol_rk45.y[i, :], "r-", label = "RK45")
+    #bx[i].plot(t_pts, rk45[:, i], "k-", label = "RK45")
     bx[i].plot(t_pts, sol_rk23.y[i, :], "g-", label = "RK23")
     bx[i].plot(t_pts, sim_data[:, i], "b-", label = "simulation")
-    bx[i].set(xlabel='time/s', ylabel=f'{vel_lable[i]}-axis coordinate')
+    bx[i].set(xlabel='time/s', ylabel=f'{lable[i]}-axis coordinate')
     bx[i].legend()
     bx[i].grid()
 
