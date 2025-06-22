@@ -1,23 +1,22 @@
 # ELEN90097 Project
 
+The file tree is as follows:
+
 ``` bash
 .
 |   data_redis.ipynb # Analyze data using redis
 |   data_sqlite.ipynb # Analyze data using sqlite
 |   draw.py # Generate the animation of the formula
-|   main.py
-|   README.md
+|   main.py # Using the state space equation, MuJoCo simulation, data storage, ODE solution, and visualization.
 |   
 +---crazyfile
-|   |   cf2.png
-|   |   cf2.xml
-|   |   LICENSE
-|   |   README.md
-|   |   scene.xml
+|   |   cf2.png # Quadcopter picture
+|   |   cf2.xml # Quadcopter model and parameter definition
+|   |   scene.xml # Visualization of the quadrotor model
 |   |   
-|   \---assets
+|   \---assets # Quadcopter model file
 |           
-+---data
++---data # Data and database file
 |       50Hertz.csv
 |       Amprion.csv
 |       combined_data.csv
@@ -27,10 +26,12 @@
 |       TransnetBW.csv
 |       
 \---src
-        controller.py
-        dynamic.py
-        validate.py
+        controller.py # Callback function of MuJoCo and the PID control algorithm.
+        dynamic.py # Dynamic equation
+        validate.py # Error analysis and verification
 ```
+
+**Quadcopter unmanned aerial vehicle: mathematical modeling, simulation, data storage and analysis.**
 
 ## Parameters
 
@@ -194,3 +195,55 @@ Use a 4-dimensional input vector, that is, the input of the rotational speeds of
 ```python
 u = [w1, w2, w3, w4]
 ```
+
+## SQLite
+
+For SQL, two entities are defined: inputs and states. In these two tables, timestamps serve as the primary keys. Other attributes contain duplicate values and thus cannot be utilized as foreign keys.
+
+| Entity             | Attributes | Primary Key | Foreign Key | Constraints |
+|--------------------|---------------------------|-------------|-------------|------------------|
+| quadcopter\_inputs | Timestamp                 | Timestamp   | -           | NOT NULL         |
+|                    | Motor1\_rotational\_speed |             |             | CHECK($>0, <22$) |
+|                    | Motor2\_rotational\_speed |             |             | CHECK($>0, <22$) |
+|                    | Motor3\_rotational\_speed |             |             | CHECK($>0, <22$) |
+|                    | Motor4\_rotational\_speed |             |             | CHECK($>0, <22$) |
+| quadcopter\_states | Timestamp                 | Timestamp   | -           | NOT NULL         |
+|                    | X\_axis\_coordinate       |             |             | NOT NULL         |
+|                    | Y\_axis\_coordinate       |             |             | NOT NULL         |
+|                    | Z\_axis\_coordinate       |             |             | NOT NULL         |
+|                    | Quaternion\_w             |             |             | CHECK($>-1, <1$) |
+|                    | Quaternion\_x             |             |             | CHECK($>-1, <1$) |
+|                    | Quaternion\_y             |             |             | CHECK($>-1, <1$) |
+|                    | Quaternion\_z             |             |             | CHECK($>-1, <1$) |
+|                    | Velocity\_bx              |             |             | NOT NULL         |
+|                    | Velocity\_by              |             |             | NOT NULL         |
+|                    | Velocity\_bz              |             |             | NOT NULL         |
+|                    | Angular\_velocity\_bx     |             |             | NOT NULL         |
+|                    | Angular\_velocity\_by     |             |             | NOT NULL         |
+|                    | Angular\_velocity\_bz     |             |             | NOT NULL         |
+
+## Redis
+
+In the context of NoSQL and Redis, hash tables are employed to store status data. This approach has the advantage of maintaining a clear field structure. Meanwhile, Sorted sets are utilized to store the time index, which enables efficient range queries. In Redis, the function of the Key bears resemblance to that of the primary key in SQL. Consequently, each data entry adopts 'drone:state:{timestamp}' as the unique key (integer type, measured in milliseconds).
+
+| Entity   | Attribute | Data Type   | Redis Storage Example |
+|------------------|--------------------|----------------------|--------------------------------|
+| drone:state      | timestamp          | Unix timestamp (int) | HSET timestamp 10              |
+| ~                | motor1             | Float                | HSET ... motor1 10             |
+| ~                | motor2             | Float                | HSET ... motor2 10             |
+| ~                | motor3             | Float                | HSET ... motor3 10             |
+| ~                | motor4             | Float                | HSET ... motor4 10             |
+| ~                | pos\_x             | Float                | HSET ... pos\_x 0.1            |
+| ~                | pos\_y             | Float                | HSET ... pos\_y 0.2`           |
+| ~                | pos\_z             | Float                | HSET ... pos\_z 0.3`           |
+| ~                | q\_w               | Float                | HSET ... q\_w 1                |
+| ~                | q\_x               | Float                | HSET ... q\_x 0                |
+| ~                | q\_y               | Float                | HSET ... q\_y 0                |
+| ~                | q\_z               | Float                | HSET ... q\_z 0                |
+| ~                | vel\_x             | Float                | HSET ... vel\_x 0.01           |
+| ~                | vel\_y             | Float                | HSET ... vel\_y 0.02           |
+| ~                | vel\_z             | Float                | HSET ... vel\_z 0.03           |
+| ~                | ang\_vel\_x        | Float                | HSET ... ang\_vel\_x 0.001     |
+| ~                | ang\_vel\_y        | Float                | HSET ... ang\_vel\_y 0.002     |
+| ~                | ang\_vel\_z        | Float                | HSET ... ang\_vel\_z 0.003     |
+| drone:timestamps | (Sorted Set)       | Unix timestamp       | ZADD drone:timestamps 10 10    |

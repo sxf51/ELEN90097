@@ -1,0 +1,21 @@
+\documentclass[preview]{standalone}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\begin{document}
+\begin{center}
+$\dot{q} = \frac{1}{2} q \bigotimes \begin{bmatrix}\
+                    0 \\ \mathbf{\omega}\
+                \end{bmatrix} = \frac{1}{2}\begin{bmatrix}\
+                q_w & -q_x & -q_y & -q_z \\\
+                q_x & q_w & -q_z & q_y \\\
+                q_y & q_z & q_w & -q_x \\\
+                q_z & -q_y & q_x & q_w\
+            \end{bmatrix} \begin{bmatrix}\
+                0 \\\
+                \omega_x \\\
+                \omega_y \\\
+                \omega_z\
+            \end{bmatrix}$
+\end{center}
+\end{document}

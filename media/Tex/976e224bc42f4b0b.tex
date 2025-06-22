@@ -1,0 +1,17 @@
+\documentclass[preview]{standalone}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\begin{document}
+\begin{center}
+$\dot{\omega} = \begin{bmatrix}\
+                \dot{\omega}_x \\\
+                \dot{\omega}_y \\\
+                \dot{\omega}_z\
+            \end{bmatrix} = \begin{bmatrix}\
+                \frac{M_x + (I_{yy} - I_{zz})\omega_y\omega_z}{I_{xx}} \\\
+                \frac{M_y + (I_{zz} - I_{xx})\omega_x\omega_z}{I_{yy}} \\\
+                \frac{M_z + (I_{xx} - I_{yy})\omega_x\omega_y}{I_{zz}}\
+            \end{bmatrix}$
+\end{center}
+\end{document}

@@ -129,7 +129,7 @@ next_time = time.time() + dt
 # m.opt.integrator = mujoco.mjtIntegrator.mjINT_RK4
 
 x0 = [0., 0., 0.1, 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.] # initial state
-x0 = [0., 0., 0.1, 0.9924, 0.0868, 0.0868, 0.0076, 0., 0., 0., 0., 0., 0.]
+# x0 = [0., 0., 0.1, 0.9924, 0.0868, 0.0868, 0.0076, 0., 0., 0., 0., 0., 0.]
 d.qpos[0:7] = x0[0:7] # Initial Angle
 
 # Time parameters
@@ -170,7 +170,7 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
                 d.actuator('motor2').ctrl[0] = calc_motor_input(w[1])
                 d.actuator('motor3').ctrl[0] = calc_motor_input(w[2])
                 d.actuator('motor4').ctrl[0] = calc_motor_input(w[3])
-                time.sleep(dt)
+                #time.sleep(dt)
                 '''
                 sol_rk45 = solve_ivp(export_model, [0, dt], rk45[:][-1], args=(w,), method="RK45")
                 rk45.append(sol_rk45.y[:, -1])'''
@@ -226,7 +226,7 @@ pipe = r.pipeline()
 
 def prepare_value(value):
     if isinstance(value, (np.int64, np.float64)):
-        return value.item()  # 转换为Python原生类型
+        return value.item()
     return value
 
 for i in range(N+1):
