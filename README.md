@@ -2,10 +2,11 @@
 
 ``` bash
 .
-|   data.ipynb
+|   data_redis.ipynb # Analyze data using redis
+|   data_sqlite.ipynb # Analyze data using sqlite
+|   draw.py # Generate the animation of the formula
 |   main.py
 |   README.md
-|   tree.txt
 |   
 +---crazyfile
 |   |   cf2.png
@@ -27,8 +28,8 @@
 |       
 \---src
         controller.py
-        odeSolver.py
-        pid.py
+        dynamic.py
+        validate.py
 ```
 
 ## Parameters

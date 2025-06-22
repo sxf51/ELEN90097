@@ -7,16 +7,14 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 
 from src.controller import *
-from src.odeSolver import *
+from src.dynamic import *
+from src.validate import *
 import sqlite3
 import redis
 
 
 # Database configuration
 file_name = '.\data\quadcopter.db'
-# Redis
-pool = redis.ConnectionPool(host='localhost', port=6379, db=0, decode_responses=True)
-r = redis.Redis(connection_pool=pool)
 
 # SQLite
 conn = sqlite3.connect(file_name)
@@ -135,7 +133,7 @@ x0 = [0., 0., 0.1, 0.9924, 0.0868, 0.0868, 0.0076, 0., 0., 0., 0., 0., 0.]
 d.qpos[0:7] = x0[0:7] # Initial Angle
 
 # Time parameters
-t0, t_end = 0, 10  # Time range (seconds)
+t0, t_end = 0, 3  # Time range (seconds)
 dt = 0.01  # Time step (seconds)
 N = int((t_end - t0) / dt)  # Number of steps
 t_pts = np.linspace(t0, t_end, N + 1)
@@ -154,31 +152,31 @@ d.actuator('motor3').ctrl[0] = calc_motor_input(w[2])
 d.actuator('motor4').ctrl[0] = calc_motor_input(w[3])
 
 sim_data = list()
-sim_data.append(control_callback(m, d))
+sim_data.append(x0)
 
 rk45 = list()
 rk45.append(np.array(x0))
 
 target = [0., 0., 0.5]
 
-
+np.random.seed(42)
 with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
     while viewer.is_running():
         for i in range(N):
             if not paused:
-                '''
+                
                 w = pid_controller(control_callback(m, d), target)
                 d.actuator('motor1').ctrl[0] = calc_motor_input(w[0])
                 d.actuator('motor2').ctrl[0] = calc_motor_input(w[1])
                 d.actuator('motor3').ctrl[0] = calc_motor_input(w[2])
                 d.actuator('motor4').ctrl[0] = calc_motor_input(w[3])
-                time.sleep(dt)'''
+                time.sleep(dt)
                 '''
                 sol_rk45 = solve_ivp(export_model, [0, dt], rk45[:][-1], args=(w,), method="RK45")
                 rk45.append(sol_rk45.y[:, -1])'''
                 #time.sleep(dt*10)
                 mujoco.mj_step(m, d, nstep = 1)
-                sim_data.append(np.add(control_callback(m, d), np.random.normal(0, 0, size=(13))))
+                sim_data.append(np.add(control_callback(m, d), np.random.normal(0, 0.1, size=(13))))
                 viewer.sync()
         break
 '''
@@ -205,7 +203,7 @@ for i in range(N + 1):
 # data storage
 ws = np.full((N+1, 4), w)
 #print(np.shape(ws))
-timestamps = t_pts.reshape(1001, 1)
+timestamps = t_pts.reshape(N+1, 1)
 #print(np.shape(timestamps))
 
 sim_data = np.array(sim_data)
@@ -222,6 +220,55 @@ cur.close()
 conn.close()
 
 
+# Redis
+r = redis.Redis(host='localhost', port=6379, db=0)
+pipe = r.pipeline()
+
+def prepare_value(value):
+    if isinstance(value, (np.int64, np.float64)):
+        return value.item()  # 转换为Python原生类型
+    return value
+
+for i in range(N+1):
+    timestamp = int(timestamps[i] * 1000) 
+    key = f"drone:state:{timestamp}"
+    
+    # set Hash
+    pipe.hset(key, mapping={
+        "timestamp": prepare_value(timestamp),
+        "motor1": prepare_value(ws[i, 0]),
+        "motor2": prepare_value(ws[i, 1]),
+        "motor3": prepare_value(ws[i, 2]),
+        "motor4": prepare_value(ws[i, 3]),
+        "pos_x": prepare_value(sim_data[i, 0]),
+        "pos_y": prepare_value(sim_data[i, 1]),
+        "pos_z": prepare_value(sim_data[i, 2]),
+        "q_w": prepare_value(sim_data[i, 3]),
+        "q_x": prepare_value(sim_data[i, 4]),
+        "q_y": prepare_value(sim_data[i, 5]),
+        "q_z": prepare_value(sim_data[i, 6]),
+        "vel_x": prepare_value(sim_data[i, 7]),
+        "vel_y": prepare_value(sim_data[i, 8]),
+        "vel_z": prepare_value(sim_data[i, 9]),
+        "ang_vel_x": prepare_value(sim_data[i, 10]),
+        "ang_vel_y": prepare_value(sim_data[i, 11]),
+        "ang_vel_z": prepare_value(sim_data[i, 12])
+    })
+    
+    pipe.zadd("drone:timestamps", {timestamp: timestamp}) # sorted set
+pipe.execute()
+'''
+for i in range(4):
+    results = validate_dynamics(
+        sim_data=np.vstack([sim_data[:, 3 + i], t_pts]),
+        exp_data=np.vstack([sol_rk23.y[3 + i, :], t_pts]),
+        time_vec=t_pts,
+    )
+    print("Max Errors:", results['max_error'])
+    print("RMSE:", results['rmse'])
+    print("Variance:", results['variance'])
+'''
+'''
 # Plot
 # Velocity
 fig, ax = plt.subplots(3, 1)
@@ -248,6 +295,16 @@ for i in range(3):
     bx[i].set(xlabel='time/s', ylabel=f'{lable[i]}-axis coordinate')
     bx[i].legend()
     bx[i].grid()
+'''
+'''
+fig, cx = plt.subplots(1, 1)
+header = ['x', 'y', 'z', 'q_w', 'q_x', 'q_y', 'q_z', 'v_x', 'v_y', 'v_z', 'w_x', 'w_y', 'w_z']
+for i in range(13):
+    cx.plot(t_pts, sim_data[:, i], "-", label = f'{header[i]}')
+cx.set(xlabel='time/s', ylabel='Value of the states')
+cx.legend()
+cx.grid()
+'''
 
 # plt.tight_layout()
 plt.show()

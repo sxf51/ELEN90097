@@ -1,5 +1,6 @@
 import mujoco
 import numpy as np
+import casadi as ca
 
 gravity = 9.81
 mass = 0.033
@@ -127,5 +128,3 @@ def pid_controller(y, p_des, v_des=[0, 0, 0], yaw_des=0):
     w = np.sqrt(np.clip(w_squared, 0, None))
 
     return w.tolist()
-
-
